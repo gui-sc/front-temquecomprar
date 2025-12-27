@@ -182,10 +182,11 @@ export default function ShoppingList() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Produto</label>
+                <label htmlFor="select-product" className="block text-sm font-medium text-gray-700 mb-1">Produto</label>
                 <select
+                  id='select-product'
                   value={formData.produtoId}
-                  onChange={(e) => setFormData({ ...formData, produtoId: parseInt(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, produtoId: Number.parseInt(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   required
                 >
@@ -199,11 +200,12 @@ export default function ShoppingList() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
+                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
                 <input
+                id='quantity'
                   type="number"
                   value={formData.quantidade}
-                  onChange={(e) => setFormData({ ...formData, quantidade: parseInt(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, quantidade: Number.parseInt(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   min="1"
                   required

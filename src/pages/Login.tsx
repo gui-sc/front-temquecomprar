@@ -24,6 +24,7 @@ export default function Login() {
         setError('Email ou senha incorretos');
       }
     } catch (err) {
+      console.error('Erro ao fazer login:', err);
       setError('Erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
@@ -43,12 +44,13 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="input-email" className="block text-sm font-medium text-gray-700 mb-2">
               Email
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
+              id='input-email'
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

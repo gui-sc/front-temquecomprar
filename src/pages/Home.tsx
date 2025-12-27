@@ -13,7 +13,7 @@ export default function Home() {
   const pendingPurchases = shoppingList.filter(item => !item.comprado).length;
 
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if ('Notification' in globalThis && Notification.permission === 'default') {
       Notification.requestPermission();
     }
 

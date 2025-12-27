@@ -1,4 +1,15 @@
-import { Product, ShoppingListItem, FamilyMember } from '../types';
+import {
+  ApiResponse,
+  AuthData,
+  Product,
+  ShoppingListItem,
+  FamilyData,
+  LoginPayload,
+  RegisterPayload,
+  CreateProductPayload,
+  UpdateProductPayload,
+  CreateShoppingListPayload,
+} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -11,156 +22,240 @@ class ApiService {
     };
   }
 
-  async login(email: string, password: string) {
+  // ========== AUTENTICAÇÃO ==========
+
+  async login(payload: LoginPayload): Promise<AuthData> {
     const response = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error('Login failed');
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha no login');
     }
 
-    return response.json();
+    const result: ApiResponse<AuthData> = await response.json();
+    return result.data!;
   }
+
+  async register(payload: RegisterPayload): Promise<AuthData> {
+    const response = await fetch(`${API_BASE_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha no registro');
+    }
+
+    const result: ApiResponse<AuthData> = await response.json();
+    return result.data!;
+  }
+
+  async refreshToken(refreshToken: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao renovar token');
+    }
+
+    const result: ApiResponse<{ token: string }> = await response.json();
+    return result.data!.token;
+  }
+
+  // ========== FAMÍLIA ==========
+
+  async getFamily(): Promise<FamilyData> {
+    const response = await fetch(`${API_BASE_URL}/familia`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao buscar dados da família');
+    }
+
+    const result: ApiResponse<FamilyData> = await response.json();
+    return result.data!;
+  }
+
+  async generateInviteToken(): Promise<{ token: string; expiresAt: string; link: string }> {
+    const response = await fetch(`${API_BASE_URL}/familia/convite`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao gerar convite');
+    }
+
+    const result: ApiResponse<{ token: string; expiresAt: string; link: string }> = await response.json();
+    return result.data!;
+  }
+
+  // ========== PRODUTOS ==========
 
   async getProducts(): Promise<Product[]> {
-    const response = await fetch(`${API_BASE_URL}/products`, {
+    const response = await fetch(`${API_BASE_URL}/produtos`, {
       headers: this.getHeaders(),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch products');
+      throw new Error('Falha ao buscar produtos');
     }
 
-    return response.json();
+    const result: ApiResponse<Product[]> = await response.json();
+    return result.data!;
   }
 
-  async createProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/products`, {
+  async getAlertProducts(): Promise<Product[]> {
+    const response = await fetch(`${API_BASE_URL}/produtos/alerta`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao buscar produtos em alerta');
+    }
+
+    const result: ApiResponse<Product[]> = await response.json();
+    return result.data!;
+  }
+
+  async createProduct(payload: CreateProductPayload): Promise<Product> {
+    const response = await fetch(`${API_BASE_URL}/produtos`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify(product),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create product');
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha ao criar produto');
     }
 
-    return response.json();
+    const result: ApiResponse<Product> = await response.json();
+    return result.data!;
   }
 
-  async updateProduct(id: string, product: Partial<Product>): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+  async updateProduct(id: number, payload: UpdateProductPayload): Promise<Product> {
+    const response = await fetch(`${API_BASE_URL}/produtos/${id}`, {
       method: 'PUT',
       headers: this.getHeaders(),
-      body: JSON.stringify(product),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update product');
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha ao atualizar produto');
     }
 
-    return response.json();
+    const result: ApiResponse<Product> = await response.json();
+    return result.data!;
   }
 
-  async deleteProduct(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+  async deleteProduct(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/produtos/${id}`, {
       method: 'DELETE',
       headers: this.getHeaders(),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to delete product');
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha ao excluir produto');
     }
   }
+
+  // ========== CATEGORIAS ==========
+
+  async getCategories(): Promise<string[]> {
+    const response = await fetch(`${API_BASE_URL}/categorias`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao buscar categorias');
+    }
+
+    const result: ApiResponse<string[]> = await response.json();
+    return result.data!;
+  }
+
+  // ========== LISTA DE COMPRAS ==========
 
   async getShoppingList(): Promise<ShoppingListItem[]> {
-    const response = await fetch(`${API_BASE_URL}/shopping-list`, {
+    const response = await fetch(`${API_BASE_URL}/compras`, {
       headers: this.getHeaders(),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch shopping list');
+      throw new Error('Falha ao buscar lista de compras');
     }
 
-    return response.json();
+    const result: ApiResponse<ShoppingListItem[]> = await response.json();
+    return result.data!;
   }
 
-  async addToShoppingList(item: Omit<ShoppingListItem, 'id' | 'addedAt'>): Promise<ShoppingListItem> {
-    const response = await fetch(`${API_BASE_URL}/shopping-list`, {
+  async addToShoppingList(payload: CreateShoppingListPayload): Promise<ShoppingListItem> {
+    const response = await fetch(`${API_BASE_URL}/compras`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify(item),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to add to shopping list');
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha ao adicionar item');
     }
 
-    return response.json();
+    const result: ApiResponse<ShoppingListItem> = await response.json();
+    return result.data!;
   }
 
-  async updateShoppingListItem(id: string, item: Partial<ShoppingListItem>): Promise<ShoppingListItem> {
-    const response = await fetch(`${API_BASE_URL}/shopping-list/${id}`, {
-      method: 'PUT',
+  async togglePurchased(id: number): Promise<ShoppingListItem> {
+    const response = await fetch(`${API_BASE_URL}/compras/${id}/comprado`, {
+      method: 'PATCH',
       headers: this.getHeaders(),
-      body: JSON.stringify(item),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update shopping list item');
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha ao atualizar item');
     }
 
-    return response.json();
+    const result: ApiResponse<ShoppingListItem> = await response.json();
+    return result.data!;
   }
 
-  async deleteShoppingListItem(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/shopping-list/${id}`, {
+  async deleteShoppingListItem(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/compras/${id}`, {
       method: 'DELETE',
       headers: this.getHeaders(),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to delete shopping list item');
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha ao remover item');
     }
   }
 
-  async getFamilyMembers(): Promise<FamilyMember[]> {
-    const response = await fetch(`${API_BASE_URL}/family/members`, {
-      headers: this.getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch family members');
-    }
-
-    return response.json();
-  }
-
-  async generateInviteLink(): Promise<{ token: string; expiresAt: string }> {
-    const response = await fetch(`${API_BASE_URL}/family/invite`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to generate invite link');
-    }
-
-    return response.json();
-  }
+  // ========== NOTIFICAÇÕES ==========
 
   async savePushToken(pushToken: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/notifications/token`, {
+    const response = await fetch(`${API_BASE_URL}/usuarios/token-push`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ pushToken }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to save push token');
+      throw new Error('Falha ao salvar token de push');
     }
   }
 }

@@ -2,20 +2,28 @@ import { useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, Users, AlertCircle } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useStore } from '../store/useStore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { products, shoppingList } = useStore();
+  const { products, shoppingList, familyMembers, loadProducts, loadShoppingList, loadFamilyData } = useStore();
+  const [loading, setLoading] = useState(true);
 
-  const lowStockCount = products.filter(p => p.currentQuantity <= p.minQuantity).length;
-  const pendingPurchases = shoppingList.filter(item => !item.purchased).length;
+  const lowStockCount = products.filter(p => p.quantidadeAtual <= p.quantidadeMinima).length;
+  const pendingPurchases = shoppingList.filter(item => !item.comprado).length;
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-  }, []);
+
+    // Carregar dados iniciais
+    Promise.all([
+      loadProducts().catch(err => console.error('Erro ao carregar produtos:', err)),
+      loadShoppingList().catch(err => console.error('Erro ao carregar lista:', err)),
+      loadFamilyData().catch(err => console.error('Erro ao carregar família:', err)),
+    ]).finally(() => setLoading(false));
+  }, [loadProducts, loadShoppingList, loadFamilyData]);
 
   const cards = [
     {
@@ -37,12 +45,22 @@ export default function Home() {
     {
       title: 'Membros',
       icon: Users,
-      count: 4,
+      count: familyMembers.length,
       color: 'from-purple-500 to-purple-600',
       path: '/members',
       description: 'membros da família',
     },
   ];
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Carregando dados...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

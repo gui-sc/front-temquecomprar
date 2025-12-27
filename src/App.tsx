@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -6,21 +5,12 @@ import Products from './pages/Products';
 import ShoppingList from './pages/ShoppingList';
 import Members from './pages/Members';
 import ProtectedRoute from './utils/ProtectedRoute';
-import { useStore } from './store/useStore';
-import { loadMockData } from './utils/mockData';
+import ToastContainer from './components/ToastContainer';
 
 function App() {
-  const { token, setProducts } = useStore();
-
-  useEffect(() => {
-    if (token) {
-      const mockData = loadMockData();
-      setProducts(mockData);
-    }
-  }, [token, setProducts]);
-
   return (
     <BrowserRouter>
+      <ToastContainer />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route

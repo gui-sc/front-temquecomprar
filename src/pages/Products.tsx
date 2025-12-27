@@ -1,16 +1,19 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Plus, X, Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import ProductCard from '../components/ProductCard';
+import CategorySelect from '../components/CategorySelect';
 import { useStore } from '../store/useStore';
 import { Product } from '../types';
 
 export default function Products() {
-  const { products, addProduct, updateProduct, deleteProduct, addToShoppingList, user } = useStore();
+  const { products, addProduct, updateProduct, deleteProduct, addToShoppingList, loadProducts, addToast } = useStore();
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -20,62 +23,97 @@ export default function Products() {
     minQuantity: 1,
   });
 
+  useEffect(() => {
+    loadProducts()
+      .catch(err => console.error('Erro ao carregar produtos:', err))
+      .finally(() => setLoading(false));
+  }, [loadProducts]);
+
+  // Extrai categorias únicas dos produtos
+  useEffect(() => {
+    const uniqueCategories = Array.from(new Set(products.map(p => p.categoria))).sort();
+    setAllCategories(uniqueCategories);
+  }, [products]);
+
   const categories = useMemo(() => {
-    const cats = new Set(products.map(p => p.category));
+    const cats = new Set(products.map(p => p.categoria));
     return ['all', ...Array.from(cats)];
   }, [products]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.brand.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+      const matchesSearch = product.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.marca.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || product.categoria === selectedCategory;
       return matchesSearch && matchesCategory;
     });
   }, [products, searchTerm, selectedCategory]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingProduct) {
-      updateProduct(editingProduct.id, formData);
-    } else {
-      addProduct({
-        ...formData,
-        addedBy: user?.name || 'Usuário',
-      });
+    try {
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, {
+          nome: formData.name,
+          marca: formData.brand,
+          categoria: formData.category,
+          quantidadeAtual: formData.currentQuantity,
+          quantidadeMinima: formData.minQuantity,
+        });
+        addToast('success', 'Produto atualizado com sucesso!');
+      } else {
+        await addProduct(
+          formData.name,
+          formData.brand,
+          formData.category,
+          formData.currentQuantity,
+          formData.minQuantity
+        );
+        addToast('success', 'Produto cadastrado com sucesso!');
+      }
+      handleCloseModal();
+    } catch (error) {
+      addToast('error', 'Erro ao salvar produto. Tente novamente.');
+      console.error('Erro:', error);
     }
-    handleCloseModal();
   };
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
-      name: product.name,
-      brand: product.brand,
-      category: product.category,
-      currentQuantity: product.currentQuantity,
-      minQuantity: product.minQuantity,
+      name: product.nome,
+      brand: product.marca,
+      category: product.categoria,
+      currentQuantity: product.quantidadeAtual,
+      minQuantity: product.quantidadeMinima,
     });
     setShowModal(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm('Deseja realmente excluir este produto?')) {
-      deleteProduct(id);
+      try {
+        await deleteProduct(id);
+        addToast('success', 'Produto excluído com sucesso!');
+      } catch (error) {
+        addToast('error', 'Erro ao excluir produto. Tente novamente.');
+        console.error('Erro:', error);
+      }
     }
   };
 
-  const handleAddToList = (product: Product) => {
-    const quantityNeeded = product.minQuantity - product.currentQuantity;
-    addToShoppingList({
-      productId: product.id,
-      productName: product.name,
-      brand: product.brand,
-      quantity: Math.max(1, quantityNeeded),
-      purchased: false,
-      addedBy: user?.name || 'Usuário',
-    });
-    alert('Produto adicionado à lista de compras!');
+  const handleAddToList = async (product: Product) => {
+    const quantityNeeded = product.quantidadeMinima - product.quantidadeAtual;
+    try {
+      await addToShoppingList(
+        product.id,
+        Math.max(1, quantityNeeded)
+      );
+      addToast('success', `${product.nome} adicionado à lista de compras!`);
+    } catch (error) {
+      addToast('error', 'Erro ao adicionar à lista. Tente novamente.');
+      console.error('Erro:', error);
+    }
   };
 
   const handleCloseModal = () => {
@@ -136,7 +174,11 @@ export default function Products() {
           </div>
         </div>
 
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Carregando produtos...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">Nenhum produto encontrado</p>
           </div>
@@ -192,13 +234,11 @@ export default function Products() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                <input
-                  type="text"
+                <CategorySelect
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                  placeholder="Ex: Alimentos, Limpeza, Higiene..."
+                  onChange={(value) => setFormData({ ...formData, category: value })}
+                  categories={allCategories}
+                  placeholder="Selecione ou crie uma categoria..."
                 />
               </div>
 

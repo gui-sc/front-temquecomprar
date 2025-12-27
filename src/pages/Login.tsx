@@ -90,12 +90,6 @@ export default function Login() {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800 font-medium mb-1">Demo:</p>
-          <p className="text-xs text-blue-700">Email: demo@familia.com</p>
-          <p className="text-xs text-blue-700">Senha: demo123</p>
-        </div>
       </div>
     </div>
   );

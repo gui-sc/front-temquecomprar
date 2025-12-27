@@ -1,4 +1,4 @@
-import { User, Crown } from 'lucide-react';
+import { User } from 'lucide-react';
 import { FamilyMember } from '../types';
 
 interface MemberCardProps {
@@ -14,15 +14,9 @@ export default function MemberCard({ member }: MemberCardProps) {
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-gray-800">{member.name}</h3>
-            {member.role === 'admin' && (
-              <Crown size={16} className="text-yellow-500" />
-            )}
+            <h3 className="font-semibold text-gray-800">{member.nome}</h3>
           </div>
           <p className="text-sm text-gray-600">{member.email}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            Membro desde {new Date(member.joinedAt).toLocaleDateString('pt-BR')}
-          </p>
         </div>
       </div>
     </div>

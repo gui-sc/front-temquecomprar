@@ -100,6 +100,39 @@ class ApiService {
     return result.data!;
   }
 
+  // ========== CONVITES ==========
+
+  async validateInviteToken(token: string): Promise<{ familia: { id: number; nome: string } }> {
+    const response = await fetch(`${API_BASE_URL}/convite/${token}/validar`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Convite inválido ou expirado');
+    }
+
+    const result: ApiResponse<{ familia: { id: number; nome: string } }> = await response.json();
+    return result.data!;
+  }
+
+  async acceptInvite(token: string, nome: string, email: string, senha: string): Promise<AuthData> {
+    const response = await fetch(`${API_BASE_URL}/convite/${token}/aceitar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, email, senha }),
+    });
+
+    if (!response.ok) {
+      const error: ApiResponse<never> = await response.json();
+      throw new Error(error.message || 'Falha ao aceitar convite');
+    }
+
+    const result: ApiResponse<AuthData> = await response.json();
+    return result.data!;
+  }
+
   // ========== PRODUTOS ==========
 
   async getProducts(): Promise<Product[]> {

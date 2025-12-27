@@ -22,7 +22,9 @@ export default function Members() {
     setGeneratingInvite(true);
     try {
       const invite = await generateInvite();
-      setInviteLink(invite.link);
+      // Gera link para o frontend, não para a API
+      const frontendLink = `${window.location.origin}/join/${invite.token}`;
+      setInviteLink(frontendLink);
       setExpiresAt(invite.expiresAt);
       setShowInviteLink(true);
       addToast('success', 'Link de convite gerado com sucesso!');

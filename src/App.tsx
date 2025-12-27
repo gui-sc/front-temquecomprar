@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import ShoppingList from './pages/ShoppingList';
 import Members from './pages/Members';
+import JoinFamily from './pages/JoinFamily';
 import ProtectedRoute from './utils/ProtectedRoute';
 import ToastContainer from './components/ToastContainer';
 
@@ -13,6 +15,8 @@ function App() {
       <ToastContainer />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/join/:token" element={<JoinFamily />} />
         <Route
           path="/home"
           element={

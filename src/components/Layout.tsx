@@ -31,7 +31,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold">Tem que Comprar</h1>
-              {user && <p className="text-sm text-blue-100">Olá, {user.name}</p>}
+              {user && <p className="text-sm text-blue-100">Olá, {user.nome}</p>}
             </div>
             <button
               onClick={handleLogout}

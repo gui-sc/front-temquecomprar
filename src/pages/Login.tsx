@@ -90,6 +90,18 @@ export default function Login() {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Não tem uma conta?{' '}
+            <button
+              onClick={() => navigate('/register')}
+              className="text-blue-600 hover:underline font-medium"
+            >
+              Criar nova família
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );
